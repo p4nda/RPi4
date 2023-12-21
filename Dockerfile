@@ -64,7 +64,7 @@ COPY artifacts/keys/arm64_dbx.bin keys/
 RUN set -exou pipefail; \
     export WORKSPACE=$PWD && \
     export PACKAGES_PATH=$WORKSPACE/edk2:$WORKSPACE/edk2-platforms:$WORKSPACE/edk2-non-osi && \
-    export BUILD_FLAGS="-D SECURE_BOOT_ENABLE=TRUE -D INCLUDE_TFTP_COMMAND=FALSE -D NETWORK_ISCSI_ENABLE=FALSE -D SMC_PCI_SUPPORT=1" && \
+    export BUILD_FLAGS="-D SECURE_BOOT_ENABLE=TRUE -D INCLUDE_TFTP_COMMAND=TRUE -D NETWORK_ISCSI_ENABLE=TRUE -D SMC_PCI_SUPPORT=1" && \
     export DEFAULT_KEYS="-D DEFAULT_KEYS=TRUE -D PK_DEFAULT_FILE=$WORKSPACE/keys/pk.cer -D KEK_DEFAULT_FILE1=$WORKSPACE/keys/ms_kek.cer -D DB_DEFAULT_FILE1=$WORKSPACE/keys/ms_db1.cer -D DB_DEFAULT_FILE2=$WORKSPACE/keys/ms_db2.cer -D DBX_DEFAULT_FILE1=$WORKSPACE/keys/arm64_dbx.bin" && \
     export EDK_TOOLS_PATH=$WORKSPACE/edk2/BaseTools && \
     export CONF_PATH=$WORKSPACE/edk2/BaseTools/Conf && \
@@ -151,7 +151,7 @@ RUN microdnf install -y tar && \
 # Download DIST/RPi4_UEFI_Firmware_${VERSION}.tar.gz
 # mkdir /home/${USER}/RPi4_UEFI_${VERSION}
 # podman run --rm -it -v /home/${USER}/RPi4_UEFI_${VERSION}:/artifacts:Z localhost/ndf-uefi-rpi4:latest /bin/sh
-# cp -R ~/artifacts/* /artifacts
+# cp -R ~/* /artifacts
 VOLUME ["/artifacts"]
 
 USER ${CONTAINER_UID}
