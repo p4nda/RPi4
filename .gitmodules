@@ -1,12 +1,12 @@
 [submodule "edk2"]
 	path = edk2
-	url = https://github.com/tianocore/edk2.git
-	branch = master
+	url = https://github.com/p4nda/edk2.git
+	branch = release/1.36-beta
 [submodule "edk2-platforms"]
 	path = edk2-platforms
-	url = https://github.com/tianocore/edk2-platforms.git
-	branch = master
+	url = https://github.com/p4nda/edk2-platforms.git
+	branch = release/1.36-beta
 [submodule "edk2-non-osi"]
 	path = edk2-non-osi
-	url = https://github.com/tianocore/edk2-non-osi.git
-	branch = master
+	url = https://github.com/p4nda/edk2-non-osi.git
+	branch = release/1.36-beta
