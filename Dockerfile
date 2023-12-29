@@ -1,14 +1,12 @@
 # Build RPi4 edk2 UEFI and include latest Raspberry PI firmware
 
 ARG CONTAINER_NAME=firmware
-ARG VERSION="20231221"
+ARG VERSION="1.36-beta"
 ARG ARCHIVE_NAME="RPi4_UEFI_Firmware_${VERSION}.tar.gz"
-ARG PROJECT_URL=https://github.com/p4nda/RPi4
+ARG PROJECT_URL="https://github.com/p4nda/RPi4"
 ARG GIT_BRANCH="release/1.36-beta"
-ARG RPI4_REPO_NAME="RPi4"
 
 # Download official RPi firmware
-# Branch next (default) | master
 ARG RPI_FIRMWARE_URL=https://github.com/raspberrypi/firmware/
 ARG RPI_FIRMWARE_BRANCH="next"
 ARG START_ELF_VERSION=${RPI_FIRMWARE_BRANCH}
@@ -20,7 +18,7 @@ ARG CONTAINER_UID=1001
 
 FROM quay.io/rockylinux/rockylinux:9.3-minimal as build
 ARG PROJECT_URL
-ARG RPI4_REPO_NAME
+ARG GIT_BRANCH
 ARG VERSION
 ARG ARCH
 ARG COMPILER
@@ -32,39 +30,31 @@ RUN microdnf -y update && \
 
 # Install build dependencies
 RUN set -eux; \
-    microdnf install -y make gcc-c++ gcc-aarch64-linux-gnu libuuid-devel acpica-tools openssl-devel python
+    microdnf install -y git make patch gcc-c++ gcc-aarch64-linux-gnu libuuid-devel acpica-tools openssl openssl-devel python
 
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy contents of the RPi4 edk2 repository
-# TODO: Clone from ${PROJECT_URL}
-COPY ${RPI4_REPO_NAME}/ .
+# Download the forked RPi4 edk2 repository from GitHub
+RUN git clone --depth 1 -b ${GIT_BRANCH} ${PROJECT_URL} ./ && \
+    git submodule update --init && \
+    cd edk2 && \
+    git submodule update --init
 
-# Set up EDK2
+# Build EDK2 BaseTools
 RUN set -exou pipefail; \
     make -C edk2/BaseTools && \
     mkdir keys
 
-# Download and set up Secure Boot default keys
-COPY artifacts/keys/pk.cer keys/
-COPY artifacts/keys/ms_kek.cer keys/
-COPY artifacts/keys/ms_db1.cer keys/
-COPY artifacts/keys/ms_db2.cer keys/
-COPY artifacts/keys/arm64_dbx.bin keys/
+# Apply patch
+RUN patch --binary -d edk2 -p1 -i ../0001-MdeModulePkg-UefiBootManagerLib-Signal-ReadyToBoot-o.patch
+RUN patch --binary -d edk2-platforms -p1 -i ../0002-Check-for-Boot-Discovery-Policy-change.patch
 
-# RUN mkdir keys && \
-#    openssl req -new -x509 -newkey rsa:2048 -subj "/CN=Raspberry Pi Platform Key/" -keyout /dev/null -outform DER -out keys/pk.cer -days 7300 -nodes -sha256 && \
-#    curl -L https://go.microsoft.com/fwlink/?LinkId=321185 -o keys/ms_kek.cer && \
-#    curl -L https://go.microsoft.com/fwlink/?linkid=321192 -o keys/ms_db1.cer && \
-#    curl -L https://go.microsoft.com/fwlink/?linkid=321194 -o keys/ms_db2.cer && \
-#    curl -L https://uefi.org/sites/default/files/resources/dbxupdate_arm64.bin -o keys/arm64_dbx.bin
-
-# Build UEFI firmware
+# Build UEFI
 RUN set -exou pipefail; \
     export WORKSPACE=$PWD && \
     export PACKAGES_PATH=$WORKSPACE/edk2:$WORKSPACE/edk2-platforms:$WORKSPACE/edk2-non-osi && \
-    export BUILD_FLAGS="-D SECURE_BOOT_ENABLE=TRUE -D INCLUDE_TFTP_COMMAND=TRUE -D NETWORK_ISCSI_ENABLE=TRUE -D SMC_PCI_SUPPORT=1" && \
+    export BUILD_FLAGS="-D RPI_MODEL=4 -D SECURE_BOOT_ENABLE=FALSE -D INCLUDE_TFTP_COMMAND=FALSE -D NETWORK_ISCSI_ENABLE=FALSE -D SMC_PCI_SUPPORT=1" && \
     export DEFAULT_KEYS="-D DEFAULT_KEYS=TRUE -D PK_DEFAULT_FILE=$WORKSPACE/keys/pk.cer -D KEK_DEFAULT_FILE1=$WORKSPACE/keys/ms_kek.cer -D DB_DEFAULT_FILE1=$WORKSPACE/keys/ms_db1.cer -D DB_DEFAULT_FILE2=$WORKSPACE/keys/ms_db2.cer -D DBX_DEFAULT_FILE1=$WORKSPACE/keys/arm64_dbx.bin" && \
     export EDK_TOOLS_PATH=$WORKSPACE/edk2/BaseTools && \
     export CONF_PATH=$WORKSPACE/edk2/BaseTools/Conf && \
@@ -88,6 +78,9 @@ RUN set -exou pipefail; \
 FROM quay.io/rockylinux/rockylinux:9.3-minimal as final
 ARG CONTAINER_NAME
 ARG ARCHIVE_NAME
+ARG VERSION
+ARG PROJECT_URL
+ARG GIT_BRANCH
 ARG RPI_FIRMWARE_URL
 ARG RPI_FIRMWARE_BRANCH
 ARG START_ELF_VERSION
@@ -109,30 +102,38 @@ COPY --from=build /usr/src/app/RPI_EFI.fd .
 COPY --from=build /usr/src/app/bl31.bin .
 COPY --from=build /usr/src/app/keys keys/
 
-# Copy / Download UEFI firmware artifacts
-COPY artifacts/fixup4.dat \
-    artifacts/start4.elf \
-    artifacts/bcm2711-rpi-4-b.dtb \
-    artifacts/bcm2711-rpi-cm4.dtb \
-    artifacts/bcm2711-rpi-400.dtb \
-    artifacts/config.txt \
-    artifacts/README.txt ./
-COPY artifacts/overlays/miniuart-bt.dtbo \
-    artifacts/overlays/upstream-pi4.dtbo \
-    overlays/
+# ################################
+#   Get latest raspberre firmware
+# ################################
 
-# RUN cd artifacts && \
-#    curl -O -L $RPI_FIRMWARE_URL/raw/$START_ELF_VERSION/boot/fixup4.dat && \
-#    curl -O -L $RPI_FIRMWARE_URL/raw/$START_ELF_VERSION/boot/start4.elf && \
-#    curl -O -L $RPI_FIRMWARE_URL/raw/$DTB_VERSION/boot/bcm2711-rpi-4-b.dtb && \
-#    curl -O -L $RPI_FIRMWARE_URL/raw/$DTB_VERSION/boot/bcm2711-rpi-cm4.dtb && \
-#    curl -O -L $RPI_FIRMWARE_URL/raw/$DTB_VERSION/boot/bcm2711-rpi-400.dtb && \
-#    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/miniuart-bt.dtbo && \
-#    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/upstream-pi4.dtbo && \
-#    mv *.dtbo overlays/
+# Download latest version of compiled *.dtbo overlays
+# https://github.com/raspberrypi/firmware/blob/next/boot/overlays/
+
+RUN curl -O -L $RPI_FIRMWARE_URL/raw/$START_ELF_VERSION/boot/fixup4.dat && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$START_ELF_VERSION/boot/start4.elf && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTB_VERSION/boot/bcm2711-rpi-4-b.dtb && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTB_VERSION/boot/bcm2711-rpi-cm4.dtb && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTB_VERSION/boot/bcm2711-rpi-400.dtb && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/upstream-pi4.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/dwc2.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/dwc-otg.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/miniuart-bt.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/disable-bt.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/disable-wifi.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/disable-emmc.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/vc4-kms-v3d-pi4.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/cma.dtbo && \
+    curl -O -L $RPI_FIRMWARE_URL/raw/$DTBO_VERSION/boot/overlays/pcie-32bit-dma.dtbo && \
+    mv *.dtbo overlays/
+
+# Include text files
+COPY config-cm4.txt ./config-cm4-${VERSION}.txt
+COPY Dockerfile \
+    License.txt ./
 
 # Create UEFI firmware archive
-RUN microdnf install -y tar && \
+RUN echo -e "\n\tProject URL: ${PROJECT_URL}\n\tGit branch: ${GIT_BRANCH}\n\tRPi firmware URL: ${RPI_FIRMWARE_URL}\n\tRPi firmware branch: ${RPI_FIRMWARE_BRANCH}\n\tBuild number: ${VERSION}\n\tArchive name: ${ARCHIVE_NAME}" >> README.md && \
+    microdnf install -y tar && \
     sha256sum RPI_EFI.fd >> RPI_EFI.fd.sha256 && \
     sha256sum bl31.bin >> bl31.bin.sha256 && \
     tar -czvf DIST/${ARCHIVE_NAME}  \
@@ -141,18 +142,19 @@ RUN microdnf install -y tar && \
       *.dtb \
       fixup4.dat \
       start4.elf \
-      keys overlays && \
+      config-cm4-${VERSION}.txt \
+      Dockerfile \
+      License.txt \
+      overlays && \
     sha256sum DIST/${ARCHIVE_NAME} >> DIST/${ARCHIVE_NAME}.sha256 && \
     microdnf remove -y tar && microdnf clean all && \
     chown -R ${CONTAINER_UID}:0 /home/${CONTAINER_NAME} && \
-    chmod -R 0755 /home/${CONTAINER_NAME}    
+    chmod -R 0755 /home/${CONTAINER_NAME}
 
-# RPI_EFI.fd & latest RPi firmware
-# Download DIST/RPi4_UEFI_Firmware_${VERSION}.tar.gz
+# Get RPI_EFI.fd with latest RPi firmware
 # mkdir /home/${USER}/RPi4_UEFI_${VERSION}
-# podman run --rm -it -v /home/${USER}/RPi4_UEFI_${VERSION}:/artifacts:Z localhost/ndf-uefi-rpi4:latest /bin/sh
-# cp -R ~/* /artifacts
+# podman run --rm -it -v /home/${USER}/RPi4_UEFI_${VERSION}:/artifacts:Z localhost/ndf-uefi-rpi4:latest
 VOLUME ["/artifacts"]
 
 USER ${CONTAINER_UID}
-CMD ["/bin/bash"]
+CMD ["/bin/bash", "-c", "cp -R ~/* /artifacts"]
