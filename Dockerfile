@@ -1,26 +1,25 @@
 # Build RPi4 edk2 UEFI and include latest Raspberry PI firmware
 
-ARG CONTAINER_NAME=firmware
-ARG VERSION="1.36-beta"
-ARG ARCHIVE_NAME="RPi4_UEFI_Firmware_${VERSION}.tar.gz"
+ARG CONTAINER_NAME="RPi4_UEFI_Firmware"
 ARG PROJECT_URL="https://github.com/p4nda/RPi4"
-ARG GIT_BRANCH="release/1.36-beta"
-# ARG RPI4_REPO_NAME="RPi4"
+ARG BRANCH="1.36-beta-update-20240203"
+ARG GIT_BRANCH="release/${BRANCH}"
+ARG ARCHIVE_NAME="${CONTAINER_NAME}_${BRANCH}.tar.gz"
 
 # Download official RPi firmware
 ARG RPI_FIRMWARE_URL=https://github.com/raspberrypi/firmware/
 ARG RPI_FIRMWARE_BRANCH="next"
-ARG START_ELF_VERSION=${RPI_FIRMWARE_BRANCH}
-ARG DTB_VERSION=${RPI_FIRMWARE_BRANCH}
-ARG DTBO_VERSION=${RPI_FIRMWARE_BRANCH}
+ARG START_ELF_VERSION="next"
+ARG DTB_VERSION="next"
+ARG DTBO_VERSION="next"
 
 ARG CONTAINER_GID=1001
 ARG CONTAINER_UID=1001
 
 FROM quay.io/rockylinux/rockylinux:9.3-minimal as build
 ARG PROJECT_URL
+ARG BRANCH
 ARG GIT_BRANCH
-ARG VERSION
 ARG ARCH
 ARG COMPILER
 ARG BUILD_TYPE
@@ -37,15 +36,20 @@ RUN set -eux; \
 WORKDIR /usr/src/app
 
 # a) Copy contents of locally downloaded RPi4 edk2 repository with all submodules
-# COPY ${RPI4_REPO_NAME}/ .
+# COPY RPi4/ .
 
-# b) Download RPi4 edk2 repository from GitHub
+# b) Download RPi4 repository with edk2 submodules from GitHub
 RUN set -eux; \
-    git clone --depth 1 -b ${GIT_BRANCH} ${PROJECT_URL} ./ && \
-    git submodule update --init --depth 1 && \
-    cd edk2 && git submodule update --init --depth 1 && git checkout ${GIT_BRANCH} && \
-    cd ../edk2-platforms && git checkout ${GIT_BRANCH} && \
-    cd ../edk2-non-osi && git checkout ${GIT_BRANCH}
+    git clone --branch ${GIT_BRANCH} ${PROJECT_URL} ./  && \
+                            git submodule update --init && \
+    cd              edk2 && git submodule update --init && git checkout ${GIT_BRANCH} && git submodule update --remote && \
+    cd   ../edk2-non-osi && git submodule update --init && git checkout ${GIT_BRANCH} && git submodule update --remote && \
+    cd ../edk2-platforms && git submodule update --init && git checkout ${GIT_BRANCH} && git submodule update --remote
+    
+
+# Fix submodule build
+# Use OpenSSL 3.0.12 https://github.com/openssl/openssl/commit/c3cc0f1386b0544383a61244a4beeb762b67498f
+RUN cd edk2/CryptoPkg/Library/OpensslLib/openssl && git checkout c3cc0f1386b0544383a61244a4beeb762b67498f
 
 # Build EDK2 BaseTools
 RUN set -exou pipefail; \
@@ -73,7 +77,7 @@ RUN patch --binary -d edk2-platforms -p1 -i ../0002-Check-for-Boot-Discovery-Pol
 RUN set -exou pipefail; \
     export WORKSPACE=$PWD && \
     export PACKAGES_PATH=$WORKSPACE/edk2:$WORKSPACE/edk2-platforms:$WORKSPACE/edk2-non-osi && \
-    export BUILD_FLAGS="-D RPI_MODEL=4 -D SECURE_BOOT_ENABLE=FALSE -D INCLUDE_TFTP_COMMAND=FALSE -D NETWORK_ISCSI_ENABLE=FALSE -D SMC_PCI_SUPPORT=1" && \
+    export BUILD_FLAGS="-D RPI_MODEL=4 -D SECURE_BOOT_ENABLE=TRUE -D INCLUDE_TFTP_COMMAND=FALSE -D NETWORK_ISCSI_ENABLE=FALSE -D SMC_PCI_SUPPORT=1" && \
     export DEFAULT_KEYS="-D DEFAULT_KEYS=TRUE -D PK_DEFAULT_FILE=$WORKSPACE/keys/pk.cer -D KEK_DEFAULT_FILE1=$WORKSPACE/keys/ms_kek.cer -D DB_DEFAULT_FILE1=$WORKSPACE/keys/ms_db1.cer -D DB_DEFAULT_FILE2=$WORKSPACE/keys/ms_db2.cer -D DBX_DEFAULT_FILE1=$WORKSPACE/keys/arm64_dbx.bin" && \
     export EDK_TOOLS_PATH=$WORKSPACE/edk2/BaseTools && \
     export CONF_PATH=$WORKSPACE/edk2/BaseTools/Conf && \
@@ -85,7 +89,7 @@ RUN set -exou pipefail; \
     for BUILD_TYPE in RELEASE; do \
         build -a $ARCH -t $COMPILER -b $BUILD_TYPE -p edk2-platforms/Platform/RaspberryPi/RPi4/RPi4.dsc \
         --pcd gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor=L"${PROJECT_URL}" \
-        --pcd gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString=L"UEFI Firmware ${VERSION}" \
+        --pcd gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString=L"UEFI Firmware ${BRANCH}" \
         ${BUILD_FLAGS} ${DEFAULT_KEYS} ; \
     done && \
     mv Build/RPi4/${BUILD_TYPE}_${COMPILER}/FV/RPI_EFI.fd /usr/src/app/RPI_EFI.fd && \
@@ -97,9 +101,9 @@ RUN set -exou pipefail; \
 FROM quay.io/rockylinux/rockylinux:9.3-minimal as final
 ARG CONTAINER_NAME
 ARG ARCHIVE_NAME
-ARG VERSION
-ARG PROJECT_URL
+ARG BRANCH
 ARG GIT_BRANCH
+ARG PROJECT_URL
 ARG RPI_FIRMWARE_URL
 ARG RPI_FIRMWARE_BRANCH
 ARG START_ELF_VERSION
@@ -146,13 +150,13 @@ RUN curl -O -L $RPI_FIRMWARE_URL/raw/$START_ELF_VERSION/boot/fixup4.dat && \
     mv *.dtbo overlays/
 
 # Copy README and config.txt
-COPY artifacts/config-cm4.txt ./config-cm4-${VERSION}.txt
+COPY artifacts/config-cm4.txt ./config-cm4-${BRANCH}.txt
 COPY artifacts/README.md ./
 COPY Dockerfile \
     License.txt ./
 
 # Create UEFI firmware archive
-RUN echo -e "\n\tProject URL: ${PROJECT_URL}\n\tGit branch: ${GIT_BRANCH}\n\tRPi firmware URL: ${RPI_FIRMWARE_URL}\n\tRPi firmware branch: ${RPI_FIRMWARE_BRANCH}\n\tBuild number: ${VERSION}\n\tArchive name: ${ARCHIVE_NAME}" >> README.md && \
+RUN echo -e "\n\tProject URL: ${PROJECT_URL}\n\tGit branch: ${GIT_BRANCH}\n\tRPi firmware URL: ${RPI_FIRMWARE_URL}\n\tRPi firmware branch: ${RPI_FIRMWARE_BRANCH}\n\tArchive name: ${ARCHIVE_NAME}" >> README.md && \
     microdnf install -y tar && \
     sha256sum RPI_EFI.fd >> RPI_EFI.fd.sha256 && \
     sha256sum bl31.bin >> bl31.bin.sha256 && \
@@ -164,7 +168,7 @@ RUN echo -e "\n\tProject URL: ${PROJECT_URL}\n\tGit branch: ${GIT_BRANCH}\n\tRPi
       License.txt \
       README.md \
       RPI_EFI.fd RPI_EFI.fd.sha256 \
-      config-cm4-${VERSION}.txt \
+      config-cm4-${BRANCH}.txt \
       overlays && \
     # bl31.bin bl31.bin.sha256 \
     # keys \
@@ -173,12 +177,14 @@ RUN echo -e "\n\tProject URL: ${PROJECT_URL}\n\tGit branch: ${GIT_BRANCH}\n\tRPi
     chown -R ${CONTAINER_UID}:0 /home/${CONTAINER_NAME} && \
     chmod -R 0755 /home/${CONTAINER_NAME}
 
-# RPI_EFI.fd & latest RPi firmware
-# mkdir /home/${USER}/RPi4_UEFI_${VERSION}
-# IMAGE_DATE=$(date +'%Y%m%d%H%M')
-# podman build --squash --build-arg VERSION=${IMAGE_DATE} -t localhost/ndf-uefi-rpi4:latest .
-# podman run --rm -it -v /home/${USER}/RPi4_UEFI_${IMAGE_DATE}:/artifacts:Z localhost/ndf-uefi-rpi4:latest /bin/sh
+# Get RPI_EFI.fd & latest RPi firmware
+# BRANCH=1.36-beta-update-20240203
+# ARTIFACTS_DIR="/home/${USER}/RPi4_UEFI_${BRANCH}"
+# mkdir $ARTIFACTS_DIR
+# podman build --squash --build-arg BRANCH=${BRANCH} -t localhost/ndf-uefi-rpi4:latest .
+# podman run --rm -it -v $ARTIFACTS_DIR:/artifacts:Z localhost/ndf-uefi-rpi4:latest
 VOLUME ["/artifacts"]
 
 USER ${CONTAINER_UID}
+# Copy artifacts to the attached volume directory
 CMD ["/bin/bash", "-c", "cp -R ~/* /artifacts"]
