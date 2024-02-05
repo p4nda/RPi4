@@ -1,0 +1,26 @@
+# https://www.raspberrypi.com/documentation/computers/configuration.html
+# https://github.com/raspberrypi/firmware/tree/next/boot/overlays
+# TODO: Review and rename to config.txt
+
+armstub=RPI_EFI.fd
+device_tree_address=0x1f0000
+device_tree_end=0x200000
+enable_uart=1
+uart_2ndstage=1
+disable_overscan=1
+disable_commandline_tags=1
+disable_splash=1
+dtparam=audio=off
+dtoverlay=disable-wifi
+dtoverlay=disable-bt
+dtoverlay=dwc2,dr_mode=host
+gpu_mem=64
+
+[CM4]
+device_tree=bcm2711-rpi-cm4.dtb
+dtoverlay=upstream-pi4
+dtoverlay=vc4-kms-v3d-pi4
+arm_freq=1500
+temp_limit=85
+arm_64bit=1
+enable_gic=1

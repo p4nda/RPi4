@@ -151,6 +151,7 @@ RUN curl -O -L $RPI_FIRMWARE_URL/raw/$START_ELF_VERSION/boot/fixup4.dat && \
 
 # Copy README and config.txt
 COPY artifacts/config-cm4.txt ./config-cm4-${BRANCH}.txt
+COPY artifacts/config-cm4.txt ./config.txt
 COPY artifacts/README.md ./
 COPY Dockerfile \
     License.txt ./
@@ -169,6 +170,7 @@ RUN echo -e "\n\tProject URL: ${PROJECT_URL}\n\tGit branch: ${GIT_BRANCH}\n\tRPi
       README.md \
       RPI_EFI.fd RPI_EFI.fd.sha256 \
       config-cm4-${BRANCH}.txt \
+      config.txt \
       overlays && \
     # bl31.bin bl31.bin.sha256 \
     # keys \
