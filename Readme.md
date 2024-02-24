@@ -3,52 +3,48 @@ Build Raspberry Pi 4 UEFI Firmware from source
 
 # Summary
 
-2023-12-29: This repository aims to generate the latest installable builds of the official [EDK2 Raspberry Pi 4 UEFI firmware](https://github.com/tianocore/edk2-platforms/tree/master/Platform/RaspberryPi/RPi4).
-Please note that the success of the build is not guaranteed, as some submodules or submodule dependencies may fetch more recent versions.
+This repository aims to generate more recent installable builds of the official [EDK2 Raspberry Pi 4 UEFI firmware](https://github.com/tianocore/edk2-platforms/tree/master/Platform/RaspberryPi/RPi4).
+
+Please note that the success of the build is not guaranteed, as some submodules or submodule dependencies may fetch more recent code.
 
 ## Initial Notice
 
 __PLEASE READ THE FOLLOWING:__
 
-* This firmware build does not provide WiFi and BT Raspberry Pi overlays.
-* Secure boot is disabled, this may change in future release and is WIP.
-> BUILD_FLAGS="-D RPI_MODEL=4 -D SECURE_BOOT_ENABLE=FALSE -D INCLUDE_TFTP_COMMAND=FALSE -D NETWORK_ISCSI_ENABLE=FALSE
+* This firmware build does not provide WiFi and BT Raspberry Pi overlays, WiFi and BT is disabled in config-cm4.txt.
 
 * Many drivers (GPIO, VPU, etc) are still likely to be missing from your OS, and will
   have to be provided by a third party. Please do not ask for them here, as they fall
   outside of the scope of this project.
 
-* A 3GB RAM limit is __disabled by default__, but requires running more recent kernel,  
-  for Linux this usually translates to using a recent kernel (version 5.8 or later) and
-  for Windows this requires the installation of a filter driver.
-* This firmware is based on the fork of
-  [EDK2 repository](https://github.com/p4nda/edk2-platforms/tree/release/1.36-beta/Platform/RaspberryPi/RPi4),
-  with the following extra patch applied:
-  * `0001-MdeModulePkg-UefiBootManagerLib-Signal-ReadyToBoot-o.patch`
-  * `0002-Check-for-Boot-Discovery-Policy-change.patch`
+* The following extra patch is applied:
+  * `RPi4_disable_3GB_RAM_limit.patch`
+  * `RPi4_set_system_table_ACPI+DeviceTree_by_default.patch`
+  * `RPi4_increase_SD_card_default_speed_to_50_83.patch`
+  * `RPi4_decrease_default_CpuLowSpeedMHz_to_600.patch`
+
+> BUILD_FLAGS="-D RPI_MODEL=4 -D SECURE_BOOT_ENABLE=TRUE -D INCLUDE_TFTP_COMMAND=TRUE -D NETWORK_ENABLE=TRUE -D NETWORK_TLS_ENABLE=TRUE -D NETWORK_IP6_ENABLE=FALSE -D NETWORK_ISCSI_ENABLE=FALSE -D NETWORK_VLAN_ENABLE=FALSE -D NETWORK_IPSEC_ENABLE=FALSE -D SMC_PCI_SUPPORT=1"
 
 ## Usage
 
-### Prepare destination folder
 ```sh
-cd ~/ && mkdir RPi4_UEFI
-IMAGE_DATE=$(date +'%Y%m%d%H%M')
-ARTIFACTS_FOLDER_NAME="RPi4_UEFI_${IMAGE_DATE}"
-mkdir ${ARTIFACTS_FOLDER_NAME}
-sudo chmod 777 ${ARTIFACTS_FOLDER_NAME}
-```
+BRANCH_NAME="1.36-beta-update-20240224"
+ARTIFACTS_DIR="RPi4_UEFI_${BRANCH_NAME}"
+cd ~
+mkdir ${ARTIFACTS_DIR}
+chmod 777 ${ARTIFACTS_DIR}
 
-### Build the image and copy artifacts to destination
-Run as normal non-root user
-```sh
-podman build --squash --build-arg VERSION=${IMAGE_DATE} -t localhost/ndf-uefi-rpi4:latest .
-podman run --rm -it -v /home/${USER}/RPi4_UEFI_202312291434/:/artifacts:Z localhost/ndf-uefi-rpi4:latest
-```
-### Fix permissions on files produced by the image
-```sh
-sudo chown ${USER}:${USER} ${ARTIFACTS_FOLDER_NAME}
-sudo chmod 640 ${ARTIFACTS_FOLDER_NAME}
-cd ${ARTIFACTS_FOLDER_NAME}/artifacts && ls -la
+# Build
+podman build --squash --build-arg BRANCH=${BRANCH_NAME} -t localhost/ndf-uefi-rpi4:latest .
+
+# Copy artifacts to attached volume dir
+podman run --rm -it -v /home/$USER/${ARTIFACTS_DIR}:/artifacts:Z localhost/ndf-uefi-rpi4:latest
+
+# Fix artifact permissions
+find ${ARTIFACTS_DIR} -type d -exec chmod 750 {} +
+find ${ARTIFACTS_DIR} -type f -exec chmod 640 {} +
+sudo chown -R ${USER}:${USER} ${ARTIFACTS_DIR}
+cd ${ARTIFACTS_DIR}/artifacts && ls -la
 ```
 
 ## License

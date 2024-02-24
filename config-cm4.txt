@@ -1,19 +1,22 @@
-# CM4 Config (WIP)
+# Raspberry PI - CM4 Config for EDK2 UEFI
 # https://www.raspberrypi.com/documentation/computers/configuration.html
 # https://github.com/raspberrypi/firmware/tree/next/boot/overlays
 
 # UEFI
-armstub=RPI_EFI.fd
+device_tree=bcm2711-rpi-cm4.dtb
 device_tree_address=0x1f0000
 device_tree_end=0x200000
+armstub=RPI_EFI.fd
 
-[CM4]
-device_tree=bcm2711-rpi-cm4.dtb
+dtoverlay=upstream-pi4
+dtoverlay=vc4-kms-v3d-pi4
+dtoverlay=dwc2,dr_mode=host
+dtoverlay=disable-emmc2
+dtoverlay=disable-wifi
+dtoverlay=disable-bt
 
-gpu_mem=64
+arm_64bit=1
 arm_freq=1500
-arm_64bit=1                                                                      
-arm_boost=1
 enable_gic=1
 temp_limit=85
 
@@ -21,12 +24,5 @@ enable_uart=1
 uart_2ndstage=1
 disable_overscan=1
 disable_commandline_tags=1
-disable_splash=1
-
 dtparam=audio=off
-
-dtoverlay=upstream-pi4
-dtoverlay=vc4-kms-v3d-pi4
-dtoverlay=dwc2,dr_mode=host
-dtoverlay=disable-wifi
-dtoverlay=disable-bt
+disable_splash=1
