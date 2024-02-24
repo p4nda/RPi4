@@ -1,0 +1,19 @@
+Subject: [PATCH] RPi4 decrease default CpuLowSpeedMHz to 600
+---
+Index: Platform/RaspberryPi/RPi4/RPi4.dsc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Platform/RaspberryPi/RPi4/RPi4.dsc b/Platform/RaspberryPi/RPi4/RPi4.dsc
+--- a/Platform/RaspberryPi/RPi4/RPi4.dsc	(revision f2c06669a58fde47ea741544b34246d14dd9b318)
++++ b/Platform/RaspberryPi/RPi4/RPi4.dsc	(date 1708799818367)
+@@ -455,7 +455,7 @@
+   #
+   # Fixed CPU settings.
+   #
+-  gRaspberryPiTokenSpaceGuid.PcdCpuLowSpeedMHz|800
++  gRaspberryPiTokenSpaceGuid.PcdCpuLowSpeedMHz|600
+   gRaspberryPiTokenSpaceGuid.PcdCpuDefSpeedMHz|1500
+   gRaspberryPiTokenSpaceGuid.PcdCpuMaxSpeedMHz|2200
+ 

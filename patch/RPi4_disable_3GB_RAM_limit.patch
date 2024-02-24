@@ -1,0 +1,19 @@
+Subject: [PATCH] RPi4 disable 3GB RAM limit
+---
+Index: Platform/RaspberryPi/RPi4/RPi4.dsc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Platform/RaspberryPi/RPi4/RPi4.dsc b/Platform/RaspberryPi/RPi4/RPi4.dsc
+--- a/Platform/RaspberryPi/RPi4/RPi4.dsc	(revision f2c06669a58fde47ea741544b34246d14dd9b318)
++++ b/Platform/RaspberryPi/RPi4/RPi4.dsc	(date 1708799361600)
+@@ -513,7 +513,7 @@
+   # Supporting > 3GB of memory.
+   #
+   gRaspberryPiTokenSpaceGuid.PcdRamMoreThan3GB|L"RamMoreThan3GB"|gConfigDxeFormSetGuid|0x0|0
+-  gRaspberryPiTokenSpaceGuid.PcdRamLimitTo3GB|L"RamLimitTo3GB"|gConfigDxeFormSetGuid|0x0|1
++  gRaspberryPiTokenSpaceGuid.PcdRamLimitTo3GB|L"RamLimitTo3GB"|gConfigDxeFormSetGuid|0x0|0
+ 
+   #
+   # Device Tree and ACPI selection.

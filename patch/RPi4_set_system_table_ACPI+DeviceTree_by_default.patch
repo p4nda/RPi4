@@ -1,0 +1,19 @@
+Subject: [PATCH] RPi4 set system table ACPI+DeviceTree by default
+---
+Index: Platform/RaspberryPi/RPi4/RPi4.dsc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Platform/RaspberryPi/RPi4/RPi4.dsc b/Platform/RaspberryPi/RPi4/RPi4.dsc
+--- a/Platform/RaspberryPi/RPi4/RPi4.dsc	(revision f2c06669a58fde47ea741544b34246d14dd9b318)
++++ b/Platform/RaspberryPi/RPi4/RPi4.dsc	(date 1708799531985)
+@@ -522,7 +522,7 @@
+   # 1 - SYSTEM_TABLE_MODE_BOTH
+   # 2 - SYSTEM_TABLE_MODE_DT
+   #
+-  gRaspberryPiTokenSpaceGuid.PcdSystemTableMode|L"SystemTableMode"|gConfigDxeFormSetGuid|0x0|0
++  gRaspberryPiTokenSpaceGuid.PcdSystemTableMode|L"SystemTableMode"|gConfigDxeFormSetGuid|0x0|1
+ 
+   #
+   # Enable a fan in the ACPI thermal zone on GPIO pin #
