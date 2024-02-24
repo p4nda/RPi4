@@ -30,7 +30,6 @@ __PLEASE READ THE FOLLOWING:__
 ```sh
 BRANCH_NAME="1.36-beta-update-20240224"
 ARTIFACTS_DIR="RPi4_UEFI_${BRANCH_NAME}"
-cd ~
 mkdir ${ARTIFACTS_DIR}
 chmod 777 ${ARTIFACTS_DIR}
 
@@ -38,7 +37,7 @@ chmod 777 ${ARTIFACTS_DIR}
 podman build --squash --build-arg BRANCH=${BRANCH_NAME} -t localhost/ndf-uefi-rpi4:latest .
 
 # Copy artifacts to attached volume dir
-podman run --rm -it -v /home/$USER/${ARTIFACTS_DIR}:/artifacts:Z localhost/ndf-uefi-rpi4:latest
+podman run --rm -it -v $PWD/${ARTIFACTS_DIR}:/artifacts:Z localhost/ndf-uefi-rpi4:latest
 
 # Fix artifact permissions
 find ${ARTIFACTS_DIR} -type d -exec chmod 750 {} +
