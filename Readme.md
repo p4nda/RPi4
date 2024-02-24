@@ -28,22 +28,23 @@ __PLEASE READ THE FOLLOWING:__
 ## Usage
 
 ```sh
+cd RPi4
 BRANCH_NAME="1.36-beta-update-20240224"
 ARTIFACTS_DIR="RPi4_UEFI_${BRANCH_NAME}"
-mkdir ${ARTIFACTS_DIR}
-chmod 777 ${ARTIFACTS_DIR}
+mkdir "release/${ARTIFACTS_DIR}"
+chmod 777 -R "release/${ARTIFACTS_DIR}"
 
 # Build
 podman build --squash --build-arg BRANCH=${BRANCH_NAME} -t localhost/ndf-uefi-rpi4:latest .
 
 # Copy artifacts to attached volume dir
-podman run --rm -it -v $PWD/${ARTIFACTS_DIR}:/artifacts:Z localhost/ndf-uefi-rpi4:latest
+podman run --rm -it -v $PWD/release/${ARTIFACTS_DIR}:/artifacts:Z localhost/ndf-uefi-rpi4:latest
 
 # Fix artifact permissions
-find ${ARTIFACTS_DIR} -type d -exec chmod 750 {} +
-find ${ARTIFACTS_DIR} -type f -exec chmod 640 {} +
-sudo chown -R ${USER}:${USER} ${ARTIFACTS_DIR}
-cd ${ARTIFACTS_DIR}/artifacts && ls -la
+sudo find "release/${ARTIFACTS_DIR}" -type d -exec chmod 750 {} +
+sudo find "release/${ARTIFACTS_DIR}" -type f -exec chmod 640 {} +
+sudo chown -R ${USER}:${USER} "release/${ARTIFACTS_DIR}"
+cd "release/${ARTIFACTS_DIR}/artifacts" && ls -la
 ```
 
 ## License
