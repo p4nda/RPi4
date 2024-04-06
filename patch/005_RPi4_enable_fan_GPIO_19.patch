@@ -1,0 +1,21 @@
+Subject: [PATCH] 005 RPi4 enable fan GPIO 19
+---
+Index: Platform/RaspberryPi/RPi4/RPi4.dsc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Platform/RaspberryPi/RPi4/RPi4.dsc b/Platform/RaspberryPi/RPi4/RPi4.dsc
+--- a/Platform/RaspberryPi/RPi4/RPi4.dsc	(revision ff3c7adf07854bf3bb82f3362ac8ec2b03c14710)
++++ b/Platform/RaspberryPi/RPi4/RPi4.dsc	(date 1712426459481)
+@@ -530,8 +530,8 @@
+   # 0  - DISABLED
+   # 19 - Enabled on pin 19
+   #
+-  gRaspberryPiTokenSpaceGuid.PcdFanOnGpio|L"FanOnGpio"|gConfigDxeFormSetGuid|0x0|0
+-  gRaspberryPiTokenSpaceGuid.PcdFanTemp|L"FanTemp"|gConfigDxeFormSetGuid|0x0|60
++  gRaspberryPiTokenSpaceGuid.PcdFanOnGpio|L"FanOnGpio"|gConfigDxeFormSetGuid|0x0|19
++  gRaspberryPiTokenSpaceGuid.PcdFanTemp|L"FanTemp"|gConfigDxeFormSetGuid|0x0|55
+ 
+   #
+   # Reset-related.
