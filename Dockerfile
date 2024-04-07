@@ -2,7 +2,7 @@
 
 ARG CONTAINER_NAME="RPi4_UEFI_Firmware"
 ARG PROJECT_URL="https://github.com/p4nda/RPi4"
-ARG BRANCH="1.36-beta"
+ARG BRANCH="1.37-beta-update-20240406"
 ARG GIT_BRANCH="release/${BRANCH}"
 ARG ARCHIVE_NAME="${CONTAINER_NAME}_${BRANCH}.tar.gz"
 
@@ -64,17 +64,23 @@ RUN mkdir -p keys && \
     curl -L https://uefi.org/sites/default/files/resources/dbxupdate_arm64.bin -o keys/arm64_dbx.bin
 
 # Apply patch
-RUN patch --binary -d edk2-platforms -p1 -i ../patch/RPi4_disable_3GB_RAM_limit.patch
-RUN patch --binary -d edk2-platforms -p1 -i ../patch/RPi4_set_system_table_ACPI+DeviceTree_by_default.patch
-RUN patch --binary -d edk2-platforms -p1 -i ../patch/RPi4_increase_SD_card_default_speed_to_50_83.patch
-RUN patch --binary -d edk2-platforms -p1 -i ../patch/RPi4_decrease_default_CpuLowSpeedMHz_to_600.patch
+RUN patch --binary -d edk2-platforms -p1 -i ../patch/001_RPi4_disable_3GB_RAM_limit.patch
+RUN patch --binary -d edk2-platforms -p1 -i ../patch/002_RPi4_set_system_table_ACPI+DeviceTree_by_default.patch
+RUN patch --binary -d edk2-platforms -p1 -i ../patch/003_RPi4_increase_SD_card_default_speed_to_50_83.patch
+RUN patch --binary -d edk2-platforms -p1 -i ../patch/004_RPi4_decrease_default_CpuLowSpeedMHz_to_600.patch
+RUN patch --binary -d edk2-platforms -p1 -i ../patch/005_RPi4_enable_fan_GPIO_19.patch
+RUN patch --binary -d edk2-platforms -p1 -i ../patch/006_RPi4_fix_ConfigDxeHii_vfr.patch
+
+# Revert "ArmVirtPkg: make EFI_LOADER_DATA non-executable", security issue works with older kernels 
+# RUN patch --binary -d edk2 -p1 -i ../patch/007_RPi4_Revert_make_EFI_LOADER_DATA_non-executable.patch
+# RUN patch --binary -d edk2 -p1 -i ../patch/008_RPi4_disable_EFI_memory_attributes_protocol.patch
 
 # Build UEFI firmware
 # https://trustedfirmware-a.readthedocs.io/en/latest/getting_started/build-options.html
 RUN set -exou pipefail; \
     export WORKSPACE=$PWD && \
     export PACKAGES_PATH=$WORKSPACE/edk2:$WORKSPACE/edk2-platforms:$WORKSPACE/edk2-non-osi && \
-    export BUILD_FLAGS="-D RPI_MODEL=4 -D SECURE_BOOT_ENABLE=TRUE -D INCLUDE_TFTP_COMMAND=TRUE -D NETWORK_ENABLE=TRUE -D NETWORK_TLS_ENABLE=TRUE -D NETWORK_IP6_ENABLE=FALSE -D NETWORK_ISCSI_ENABLE=FALSE -D NETWORK_VLAN_ENABLE=FALSE -D NETWORK_IPSEC_ENABLE=FALSE -D SMC_PCI_SUPPORT=1" && \
+    export BUILD_FLAGS="-D RPI_MODEL=4 -D SECURE_BOOT_ENABLE=TRUE -D INCLUDE_TFTP_COMMAND=FALSE -D NETWORK_ENABLE=FALSE -D NETWORK_TLS_ENABLE=FALSE -D NETWORK_IP6_ENABLE=FALSE -D NETWORK_ISCSI_ENABLE=FALSE -D NETWORK_VLAN_ENABLE=FALSE -D NETWORK_IPSEC_ENABLE=FALSE -D SMC_PCI_SUPPORT=1" && \
     export DEFAULT_KEYS="-D DEFAULT_KEYS=TRUE -D PK_DEFAULT_FILE=$WORKSPACE/keys/pk.cer -D KEK_DEFAULT_FILE1=$WORKSPACE/keys/ms_kek.cer -D DB_DEFAULT_FILE1=$WORKSPACE/keys/ms_db1.cer -D DB_DEFAULT_FILE2=$WORKSPACE/keys/ms_db2.cer -D DBX_DEFAULT_FILE1=$WORKSPACE/keys/arm64_dbx.bin" && \
     export EDK_TOOLS_PATH=$WORKSPACE/edk2/BaseTools && \
     export CONF_PATH=$WORKSPACE/edk2/BaseTools/Conf && \

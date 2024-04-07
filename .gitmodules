@@ -1,12 +1,12 @@
 [submodule "edk2"]
 	path = edk2
 	url = https://github.com/p4nda/edk2.git
-	branch = release/1.36-beta-update-20240224
+	branch = release/1.37-beta-update-20240406
 [submodule "edk2-platforms"]
 	path = edk2-platforms
 	url = https://github.com/p4nda/edk2-platforms.git
-	branch = release/1.36-beta-update-20240224
+	branch = release/1.37-beta-update-20240406
 [submodule "edk2-non-osi"]
 	path = edk2-non-osi
 	url = https://github.com/p4nda/edk2-non-osi.git
-	branch = release/1.36-beta-update-20240224
+	branch = release/1.37-beta-update-20240406

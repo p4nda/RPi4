@@ -15,7 +15,7 @@ diff --git a/Platform/RaspberryPi/RPi4/RPi4.dsc b/Platform/RaspberryPi/RPi4/RPi4
 -  gRaspberryPiTokenSpaceGuid.PcdFanOnGpio|L"FanOnGpio"|gConfigDxeFormSetGuid|0x0|0
 -  gRaspberryPiTokenSpaceGuid.PcdFanTemp|L"FanTemp"|gConfigDxeFormSetGuid|0x0|60
 +  gRaspberryPiTokenSpaceGuid.PcdFanOnGpio|L"FanOnGpio"|gConfigDxeFormSetGuid|0x0|19
-+  gRaspberryPiTokenSpaceGuid.PcdFanTemp|L"FanTemp"|gConfigDxeFormSetGuid|0x0|55
++  gRaspberryPiTokenSpaceGuid.PcdFanTemp|L"FanTemp"|gConfigDxeFormSetGuid|0x0|50
  
    #
    # Reset-related.

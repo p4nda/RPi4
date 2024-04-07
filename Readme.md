@@ -29,7 +29,7 @@ __PLEASE READ THE FOLLOWING:__
 
 ```sh
 cd RPi4
-BRANCH_NAME="1.36-beta-update-20240224"
+BRANCH_NAME="1.37-beta-update-20240406"
 ARTIFACTS_DIR="RPi4_UEFI_${BRANCH_NAME}"
 mkdir "release/${ARTIFACTS_DIR}"
 chmod 777 -R "release/${ARTIFACTS_DIR}"

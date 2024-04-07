@@ -1,0 +1,21 @@
+Subject: [PATCH] 008 RPi4 disable EFI memory attributes protocol
+---
+Index: ArmPkg/Drivers/CpuDxe/CpuDxe.c
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ArmPkg/Drivers/CpuDxe/CpuDxe.c b/ArmPkg/Drivers/CpuDxe/CpuDxe.c
+--- a/ArmPkg/Drivers/CpuDxe/CpuDxe.c	(revision 715d372078d5ed59bbbc957d463c6f9b5495a5d1)
++++ b/ArmPkg/Drivers/CpuDxe/CpuDxe.c	(date 1712494457860)
+@@ -331,8 +331,8 @@
+                   &mCpuHandle,
+                   &gEfiCpuArchProtocolGuid,
+                   &mCpu,
+-                  &gEfiMemoryAttributeProtocolGuid,
+-                  &mMemoryAttribute,
++                  // &gEfiMemoryAttributeProtocolGuid,
++                  // &mMemoryAttribute,
+                   NULL
+                   );
+ 

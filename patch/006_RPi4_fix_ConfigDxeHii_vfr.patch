@@ -1,0 +1,63 @@
+Subject: [PATCH] 006 fix ConfigDxeHii.vfr
+---
+Index: Platform/RaspberryPi/Drivers/ConfigDxe/ConfigDxeHii.vfr
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Platform/RaspberryPi/Drivers/ConfigDxe/ConfigDxeHii.vfr b/Platform/RaspberryPi/Drivers/ConfigDxe/ConfigDxeHii.vfr
+--- a/Platform/RaspberryPi/Drivers/ConfigDxe/ConfigDxeHii.vfr	(revision e94b39e31ca1acd802491d5ebf21dde4715193d5)
++++ b/Platform/RaspberryPi/Drivers/ConfigDxe/ConfigDxeHii.vfr	(date 1712485373478)
+@@ -186,8 +186,8 @@
+               prompt      = STRING_TOKEN(STR_ADVANCED_3GB_PROMPT),
+               help        = STRING_TOKEN(STR_ADVANCED_3GB_HELP),
+               flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+-              option text = STRING_TOKEN(STR_ADVANCED_3GB_OFF), value = 0, flags = DEFAULT;
+-              option text = STRING_TOKEN(STR_ADVANCED_3GB_ON), value = 1, flags = 0;
++              option text = STRING_TOKEN(STR_ADVANCED_3GB_OFF), value = 0, flags = 0;
++              option text = STRING_TOKEN(STR_ADVANCED_3GB_ON), value = 1, flags = DEFAULT;
+           endoneof;
+         endif;
+ 
+@@ -206,9 +206,9 @@
+               prompt      = STRING_TOKEN(STR_ADVANCED_FANONGPIO_PROMPT),
+               help        = STRING_TOKEN(STR_ADVANCED_FANONGPIO_HELP),
+               flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+-              option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_OFF), value = 0, flags = DEFAULT;
++              option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_OFF), value = 0, flags = 0;
+               option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_18), value = 18, flags = 0;
+-              option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_19), value = 19, flags = 0;
++              option text = STRING_TOKEN(STR_ADVANCED_FANONGPIO_19), value = 19, flags = DEFAULT;
+           endoneof;
+         endif;
+ 
+@@ -217,9 +217,9 @@
+               prompt      = STRING_TOKEN(STR_ADVANCED_FANTEMP_PROMPT),
+               help        = STRING_TOKEN(STR_ADVANCED_FANTEMP_HELP),
+               flags       = DISPLAY_UINT_DEC | NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+-	      minimum = 50,
++	      minimum = 40,
+               maximum = 80,
+-              default = 60,
++              default = 50,
+           endnumeric;
+         endif;
+ 
+@@ -301,7 +301,7 @@
+              flags   = DISPLAY_UINT_DEC | NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+              minimum = 25,
+              maximum = 100,
+-             default = 25,
++             default = 50,
+         endnumeric;
+ 
+         numeric varid = MmcSdHighSpeedMHz.MHz,
+@@ -310,7 +310,7 @@
+              flags   = DISPLAY_UINT_DEC | NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+              minimum = 50,
+              maximum = 100,
+-             default = 50,
++             default = 83,
+         endnumeric;
+ #if (RPI_MODEL == 4)
+         grayoutif ideqval SdIsArasan.Routing == 1;

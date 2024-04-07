@@ -1,0 +1,19 @@
+Subject: [PATCH] 007 RPi4 Revert make EFI_LOADER_DATA non-executable
+---
+Index: ArmVirtPkg/ArmVirt.dsc.inc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ArmVirtPkg/ArmVirt.dsc.inc b/ArmVirtPkg/ArmVirt.dsc.inc
+--- a/ArmVirtPkg/ArmVirt.dsc.inc	(revision 715d372078d5ed59bbbc957d463c6f9b5495a5d1)
++++ b/ArmVirtPkg/ArmVirt.dsc.inc	(date 1712492870283)
+@@ -378,7 +378,7 @@
+   # reserved ones, with the exception of LoaderData regions, of which OS loaders
+   # (i.e., GRUB) may assume that its contents are executable.
+   #
+-  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0xC000000000007FD5
++  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy|0xC000000000007FD1
+ 
+   gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard|TRUE
+ 
